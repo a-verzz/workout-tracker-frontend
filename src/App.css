@@ -172,6 +172,12 @@ h1 {
   margin-bottom: 14px;
 }
 
+.header-actions {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 8px;
+}
+
 .panel-header h2 {
   margin-bottom: 4px;
   color: #17201b;
@@ -235,6 +241,10 @@ textarea {
   display: grid;
   grid-template-columns: 32px 1fr;
   gap: 11px;
+}
+
+.workout-main.schedule-main {
+  grid-template-columns: 1fr;
 }
 
 .workout-title-row {
@@ -307,6 +317,10 @@ textarea {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 8px;
+}
+
+.workout-card:has(.schedule-main) .card-actions {
+  grid-template-columns: repeat(2, 1fr);
 }
 
 .icon-button {
@@ -515,6 +529,12 @@ textarea {
   font-size: 1.25rem;
 }
 
+.editor-header p {
+  margin: 4px 0 0;
+  color: #667a70;
+  font-size: 0.82rem;
+}
+
 .editor label {
   display: grid;
   gap: 7px;
@@ -527,6 +547,33 @@ textarea {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 10px;
+}
+
+.repeat-section {
+  display: grid;
+  gap: 10px;
+}
+
+.weekday-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.day-chip {
+  min-height: 38px;
+  border: 1px solid #d9e0dc;
+  border-radius: 8px;
+  color: #496258;
+  background: #fbfcfb;
+  font-size: 0.78rem;
+  font-weight: 850;
+}
+
+.day-chip.active {
+  border-color: #274f45;
+  color: #ffffff;
+  background: #274f45;
 }
 
 .checkbox-row {
@@ -546,6 +593,32 @@ textarea {
   margin-top: 4px;
   background: #d35a3f;
 }
+
+.confirm-stop {
+  display: grid;
+  gap: 14px;
+  width: min(100%, 480px);
+  margin: 0 auto;
+  padding: 24px 20px;
+  border-radius: 8px;
+  background: #ffffff;
+  text-align: center;
+}
+
+.confirm-stop strong { font-size: 16px; }
+
+.confirm-stop p {
+  margin: 0;
+  color: #6b7c74;
+  font-size: 14px;
+}
+
+.confirm-stop-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.confirm-stop-actions > * { flex: 1; }
 
 @media (min-width: 640px) {
   .app-shell {
