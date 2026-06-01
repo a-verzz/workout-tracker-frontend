@@ -1,5 +1,6 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import axios from 'axios';
+import { Capacitor, registerPlugin } from '@capacitor/core';
 import {
   Activity,
   BarChart3,
@@ -19,6 +20,8 @@ import {
   X
 } from 'lucide-react';
 import './App.css';
+
+const WorkoutTimer = registerPlugin('WorkoutTimer');
 
 const STORAGE_KEY = 'workeeto.workouts';
 const LEGACY_STORAGE_KEY = 'workout-tracker.workouts';
@@ -180,6 +183,9 @@ function App() {
   const [activeWorkoutKey, setActiveWorkoutKey] = useState(null);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [confirmStop, setConfirmStop] = useState(false);
+  const [pendingNotifAction, setPendingNotifAction] = useState(null);
+
+  const activeWorkoutRef = useRef(null);
 
   const isApiMode = storageMode === 'api';
 
@@ -198,6 +204,15 @@ function App() {
 
     return () => clearInterval(interval);
   }, [activeWorkoutKey]);
+
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return;
+    let handle;
+    WorkoutTimer.addListener('timerAction', (data) => {
+      setPendingNotifAction(data);
+    }).then((h) => { handle = h; });
+    return () => { if (handle) handle.remove(); };
+  }, []);
 
   const persistLocal = (nextWorkouts) => {
     const normalized = nextWorkouts.map(normalizeWorkout);
@@ -347,6 +362,7 @@ function App() {
     });
     setActiveWorkoutKey(null);
     setElapsedSeconds(0);
+    if (Capacitor.isNativePlatform()) WorkoutTimer.stopTimer();
   };
 
   const toggleComplete = (workout) => {
@@ -361,6 +377,9 @@ function App() {
   const startTimer = (workout) => {
     setActiveWorkoutKey(workout.occurrenceKey || workout.id);
     setElapsedSeconds(workout.actualSeconds || 0);
+    if (Capacitor.isNativePlatform()) {
+      WorkoutTimer.startTimer({ name: workout.name, seconds: workout.actualSeconds || 0 });
+    }
   };
 
   const editWorkout = (workout) => {
@@ -428,6 +447,23 @@ function App() {
 
   const activeWorkout = selectedWorkouts.find((workout) => workout.occurrenceKey === activeWorkoutKey)
     || getRangeOccurrences(workouts, addDays(today(), -7), 21).find((workout) => workout.occurrenceKey === activeWorkoutKey);
+
+  activeWorkoutRef.current = activeWorkout || null;
+
+  useEffect(() => {
+    if (!pendingNotifAction) return;
+    const workout = activeWorkoutRef.current;
+    const secs = pendingNotifAction.elapsedSeconds || elapsedSeconds;
+    setPendingNotifAction(null);
+
+    if (pendingNotifAction.action === 'pause') {
+      if (workout) upsertOccurrence(workout, { actualSeconds: secs });
+      setActiveWorkoutKey(null);
+      setElapsedSeconds(0);
+    } else if (pendingNotifAction.action === 'done') {
+      if (workout) completeWorkout(workout, secs);
+    }
+  }, [pendingNotifAction]);
 
   return (
     <div className="app-shell">
@@ -554,6 +590,7 @@ function App() {
             setActiveWorkoutKey(null);
             setElapsedSeconds(0);
             setConfirmStop(false);
+            if (Capacitor.isNativePlatform()) WorkoutTimer.stopTimer();
           }}
         />
       )}
